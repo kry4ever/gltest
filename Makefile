@@ -12,7 +12,6 @@ CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS =
 
 # define output directory
 OUTPUT	:= output
@@ -25,7 +24,6 @@ INCLUDE	:= include
 
 # define lib directory
 LIB		:= lib
-LIBRARY := -lglfw3 -lglew32s -lgdi32 -lOpengl32
 
 ifeq ($(OS),Windows_NT)
 MAIN	:= main.exe
@@ -35,6 +33,8 @@ LIBDIRS		:= $(LIB)
 FIXPATH = $(subst /,\,$1)
 RM			:= del /q /f
 MD	:= mkdir
+LFLAGS =
+LINK_LIB := -lglfw3 -lglew32s -lgdi32 -lOpengl32
 else
 MAIN	:= main
 SOURCEDIRS	:= $(shell find $(SRC) -type d)
@@ -43,6 +43,8 @@ LIBDIRS		:= $(shell find $(LIB) -type d)
 FIXPATH = $1
 RM = rm -f
 MD	:= mkdir -p
+LFLAGS := -L/usr/local/Cellar/glew/2.2.0_1/lib -L/usr/local/lib
+LINK_LIB := -lglfw3 -lGLEW -framework OpenGL -framework CoreFoundation -framework CoreGraphics -framework IOKit -framework Cocoa
 endif
 
 # define any directories containing header files other than /usr/include
@@ -72,7 +74,7 @@ $(OUTPUT):
 	$(MD) $(OUTPUT)
 
 $(MAIN): $(OBJECTS) 
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LIBS) $(LIBRARY)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUTPUTMAIN) $(OBJECTS) $(LFLAGS) $(LINK_LIB)
 
 # this is a suffix replacement rule for building .o's from .c's
 # it uses automatic variables $<: the name of the prerequisite of

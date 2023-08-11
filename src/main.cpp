@@ -1,7 +1,7 @@
 #include <iostream>
 
 #define GLEW_STATIC
-#include "GL/glew.h"
+#include <GL/glew.h>
 #include "GLFW/glfw3.h"
 
 static std::string v_shader = R"(
@@ -78,6 +78,10 @@ int main(int argc, char *argv[])
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	#if defined(__APPLE__)
+    // macOS 特定代码
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#endif
 
 	GLFWwindow *window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
 	if (window == NULL)
