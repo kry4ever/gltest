@@ -6,7 +6,7 @@
 #include <cmath>
 #include "stb_image.h"
 
-GLuint load_image(const char* path);
+GLuint load_image(const char* path, GLint location, GLint index);
 
 static std::string v_shader = R"(
 	#version 330 core
@@ -30,11 +30,12 @@ static std::string f_shader = R"(
 	out vec4 color;
 	in vec2 TexCoord;
 	in vec4 ourColor;
-	uniform sampler2D ourTexture;
+	uniform sampler2D ourTexture1;
+	uniform sampler2D ourTexture2;
 
 	void main()
 	{
-		color = texture(ourTexture, TexCoord) * ourColor;
+		color = mix(texture(ourTexture1, TexCoord), texture(ourTexture2, TexCoord), 0.2);
 	}
 )";
 
@@ -123,7 +124,10 @@ int main(int argc, char *argv[])
 
 	GLuint shaderProgram = initProgram();
 
-	GLint texture1 = load_image("res/container.jpg");
+	GLint texture1 = load_image("res/awesomeface.png", glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
+	GLint texture2 = load_image("res/container.jpg", glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+	// glBindTexture(GL_TEXTURE_2D, texture1);
+	// glBindTexture(GL_TEXTURE_2D, texture2);
 
 	// GLfloat vertices[] = {
 	// 	-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
@@ -176,7 +180,7 @@ int main(int argc, char *argv[])
 		// std::cout << "greenValue = " << greenValue << std::endl;
 		// GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
 		// glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
-		glBindTexture(GL_TEXTURE_2D, texture1);
+		// glBindTexture(GL_TEXTURE_2D, texture1);
 		glBindVertexArray(VAO);
 		// glDrawArrays(GL_TRIANGLES, 0, 3);
 		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
