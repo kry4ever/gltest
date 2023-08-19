@@ -5,8 +5,11 @@
 #include "GLFW/glfw3.h"
 #include <cmath>
 #include "stb_image.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
-extern GLuint load_image(const char* path, GLint location, GLint index);
+GLuint load_image(const char* path, GLint location, GLint index);
 
 static std::string v_shader = R"(
 	#version 330 core
@@ -14,12 +17,16 @@ static std::string v_shader = R"(
 	layout (location = 1) in vec3 color;
 	layout (location = 2) in vec2 texCoord;
 
+	uniform mat4 model;
+	uniform mat4 view;
+	uniform mat4 projection;
+
 	out vec4 ourColor;
 	out vec2 TexCoord;
 
 	void main()
 	{
-    	gl_Position = vec4(position, 1.0);
+    	gl_Position = projection * view * model * vec4(position, 1.0);
 		ourColor = vec4(color, 1.0);
 		TexCoord = texCoord;
 	}
@@ -126,69 +133,69 @@ int main(int argc, char *argv[])
 	GLuint shaderProgram = initProgram();
 
 
-	// // load and create a texture 
-    // // -------------------------
-    // unsigned int texture1, texture2;
-    // // texture 1
-    // // ---------
-    // glGenTextures(1, &texture1);
-    // glBindTexture(GL_TEXTURE_2D, texture1); 
-    //  // set the texture wrapping parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // // set texture filtering parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // // load image, create texture and generate mipmaps
-    // int width, height, nrChannels;
-    // stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    // // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    // unsigned char *data = stbi_load("res/container.jpg", &width, &height, &nrChannels, 0);
-    // if (data)
-    // {
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    //     glGenerateMipmap(GL_TEXTURE_2D);
-    // }
-    // else
-    // {
-    //     std::cout << "Failed to load texture" << std::endl;
-    // }
-    // stbi_image_free(data);
-    // // texture 2
-    // // ---------
-    // glGenTextures(1, &texture2);
-    // glBindTexture(GL_TEXTURE_2D, texture2);
-    // // set the texture wrapping parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // // set texture filtering parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // // load image, create texture and generate mipmaps
-    // data = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
-    // if (data)
-    // {
-    //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    //     glGenerateMipmap(GL_TEXTURE_2D);
-    // }
-    // else
-    // {
-    //     std::cout << "Failed to load texture" << std::endl;
-    // }
-    // stbi_image_free(data);
+	// load and create a texture 
+    // -------------------------
+    unsigned int texture1, texture2;
+    // texture 1
+    // ---------
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1); 
+     // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    unsigned char *data = stbi_load("res/container.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    // texture 2
+    // ---------
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
-    // // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
-    // // -------------------------------------------------------------------------------------------
-    // //ourShader.use(); // don't forget to activate/use the shader before setting uniforms!
-    // // either set it manually like so:
-    // glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
-    // // or set it via the texture class
-	// glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
-    // // ourShader.setInt("texture2", 1);
+    // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
+    // -------------------------------------------------------------------------------------------
+    //ourShader.use(); // don't forget to activate/use the shader before setting uniforms!
+    // either set it manually like so:
+    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
+    // or set it via the texture class
+	glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+    // ourShader.setInt("texture2", 1);
 
-	GLint texture1 = load_image("res/awesomeface.png", glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
-	GLint texture2 = load_image("res/container.jpg", glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+	// GLint texture1 = load_image("res/awesomeface.png", glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
+	// GLint texture2 = load_image("res/container.jpg", glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
 	// glBindTexture(GL_TEXTURE_2D, texture1);
 	// glBindTexture(GL_TEXTURE_2D, texture2);
 
@@ -232,6 +239,11 @@ int main(int argc, char *argv[])
 
 	glBindVertexArray(0);
 
+	GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
+	GLint viewLoc = glGetUniformLocation(shaderProgram, "view");
+	GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+
+
 	while(!glfwWindowShouldClose(window))
 	{
 		processInput(window);
@@ -244,6 +256,18 @@ int main(int argc, char *argv[])
 		// GLint vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
 		// glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
 		// glBindTexture(GL_TEXTURE_2D, texture1);
+
+		glm::mat4 model;
+		model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		glm::mat4 view;
+		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		glm::mat4 projection;
+		projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+		// projection = glm::ortho(0.0f, 800.0f, 0.0f, 600.0f, 0.1f, 100.0f);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
 		glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
