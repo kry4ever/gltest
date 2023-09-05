@@ -17,7 +17,7 @@ CXXFLAGS	:= -std=c++17 -Wall -Wextra -g
 OUTPUT	:= output
 
 # define source directory
-SRC		:= src2
+SRC		:= src3
 
 # define include directory
 INCLUDE	:= include
