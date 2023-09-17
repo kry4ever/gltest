@@ -44,6 +44,7 @@
         "ctime": "cpp",
         "functional": "cpp",
         "iterator": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "light_shader_h": "cpp"
     }
 }
