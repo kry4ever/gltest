@@ -4,6 +4,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include <GL/glew.h>
+#include "camera.h"
 
 std::string cube_shader::getVShader()
 {
@@ -70,12 +71,12 @@ std::string cube_shader::getFShader()
                 vec3 viewDir = normalize(viewPos - FragPos);
                 vec3 reflectDir = reflect(-lightDir, norm);
 
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 128);
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
                 float specularStrength = 0.5f;
                 vec3 specular = specularStrength * spec * lightColor;  
 
                 vec3 result = (ambient + diffuse + specular) * objectColor;
-                color = vec4(specular, 1.0f);
+                color = vec4(result, 1.0f);
             }
         )";
 }
@@ -158,9 +159,10 @@ void cube_shader::init()
     GLint lightPosLoc = glGetUniformLocation(shaderProgram, "lightPosition");
     glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
-    extern glm::vec3 cameraPos;
+    // extern glm::vec3 cameraPos;
+    extern Camera camera;
     GLint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-    glUniform3f(viewPosLoc, cameraPos.x, cameraPos.y, cameraPos.z);
+    glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
 
     mVAO = initVAO();
 }

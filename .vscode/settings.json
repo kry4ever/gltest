@@ -46,5 +46,6 @@
         "iterator": "cpp",
         "iomanip": "cpp",
         "light_shader_h": "cpp"
-    }
+    },
+    "cmake.configureOnOpen": false
 }
