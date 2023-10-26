@@ -38,6 +38,26 @@ std::string cube_shader::getFShader()
 {
     return R"(
             #version 330 core
+
+            struct Material {
+                vec3 ambient;
+                vec3 diffuse;
+                vec3 specular;
+                float shininess;
+            }; 
+
+            uniform Material material;
+
+            struct Light {
+                vec3 position;
+
+                vec3 ambient;
+                vec3 diffuse;
+                vec3 specular;
+            };
+
+            uniform Light light;
+
             out vec4 color;
             //in vec2 TexCoord;
             in vec3 normalDirection;
@@ -47,35 +67,30 @@ std::string cube_shader::getFShader()
             uniform sampler2D ourTexture1;
             uniform sampler2D ourTexture2;
             
-            uniform vec3 objectColor;
+            // uniform vec3 objectColor;
             uniform vec3 lightColor;
-            uniform vec3 lightPosition;
+            // uniform vec3 lightPosition;
 
             uniform vec3 viewPos;
 
 
             void main()
             {
-                //color = mix(texture(ourTexture1, TexCoord), texture(ourTexture2, TexCoord), 0.2);
-                //color = vec4(lightColor * objectColor, 1.0f);
-
                 vec3 norm = normalize(normalDirection);
-                vec3 lightDir = normalize(lightPosition - FragPos);
+                vec3 lightDir = normalize(light.position - FragPos);
 
-                float ambientStrength = 0.1f;
-                vec3 ambient = ambientStrength * lightColor;
+                vec3 ambient = light.ambient * material.ambient;
 
                 float diff = max(dot(norm, lightDir), 0.0);
-                vec3 diffuse = diff * lightColor;
+                vec3 diffuse = diff * material.diffuse * light.diffuse;
 
                 vec3 viewDir = normalize(viewPos - FragPos);
                 vec3 reflectDir = reflect(-lightDir, norm);
 
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-                float specularStrength = 0.5f;
-                vec3 specular = specularStrength * spec * lightColor;  
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+                vec3 specular = material.specular * spec * light.specular;  
 
-                vec3 result = (ambient + diffuse + specular) * objectColor;
+                vec3 result = ambient + diffuse + specular;
                 color = vec4(result, 1.0f);
             }
         )";
@@ -155,14 +170,32 @@ void cube_shader::init()
     glUniform3f(objectColorLoc, 1.0f, 0.5f, 0.31f); // 我们所熟悉的珊瑚红
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);   // 依旧把光源设置为白色
 
-    extern glm::vec3 lightPos;
-    GLint lightPosLoc = glGetUniformLocation(shaderProgram, "lightPosition");
-    glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+    // GLint lightPosLoc = glGetUniformLocation(shaderProgram, "lightPosition");
+    // glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 
     // extern glm::vec3 cameraPos;
     extern Camera camera;
     GLint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
     glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+
+    GLint ambientLoc = glGetUniformLocation(shaderProgram, "material.ambient");
+    GLint diffuseLoc = glGetUniformLocation(shaderProgram, "material.diffuse");
+    GLint specularLoc = glGetUniformLocation(shaderProgram, "material.specular");
+    GLint shinessLoc = glGetUniformLocation(shaderProgram, "material.shininess");
+    glUniform3f(ambientLoc, 1.0f, 0.5f, 0.31f);
+    glUniform3f(diffuseLoc, 1.0f, 0.5f, 0.31f);
+    glUniform3f(specularLoc, 0.5f, 0.5f, 0.5f);
+    glUniform1f(shinessLoc, 32.0f);
+
+    GLint light_ambientLoc = glGetUniformLocation(shaderProgram, "light.ambient");
+    GLint light_diffuseLoc = glGetUniformLocation(shaderProgram, "light.diffuse");
+    GLint light_specularLoc = glGetUniformLocation(shaderProgram, "light.specular");
+    GLint light_posLoc = glGetUniformLocation(shaderProgram, "light.position");
+    glUniform3f(light_ambientLoc, 0.2f, 0.2f, 0.2f);
+    glUniform3f(light_diffuseLoc, 0.5f, 0.5f, 0.5f);
+    glUniform3f(light_specularLoc, 1.0f, 1.0f, 1.0f);
+    extern glm::vec3 lightPos;
+    glUniform3f(light_posLoc, lightPos.x, lightPos.y, lightPos.z);
 
     mVAO = initVAO();
 }

@@ -2,6 +2,7 @@
 #include <iostream>
 #define GLEW_STATIC
 #include <GL/glew.h>
+#include "glm/vec3.hpp"
 
 #ifndef BasicShader_H
 #define BasicShader_H
@@ -24,6 +25,8 @@ public:
     {
         glUseProgram(shaderProgram);
     }
+
+    void setVec3(std::string name, glm::vec3 value);
 
 private:
     GLuint initProgram(std::string vSource, std::string fSource);
