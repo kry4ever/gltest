@@ -11,14 +11,14 @@ std::string cube_shader::getVShader()
     return R"(
             #version 330 core
             layout (location = 0) in vec3 position;
-            //layout (location = 1) in vec2 texCoord;
             layout (location = 1) in vec3 normal;
+            layout (location = 2) in vec2 texCoord;
 
             uniform mat4 model;
             uniform mat4 view;
             uniform mat4 projection;
 
-            //out vec2 TexCoord;
+            out vec2 TexCoord;
 
             
             out vec3 normalDirection;
@@ -27,7 +27,7 @@ std::string cube_shader::getVShader()
             void main()
             {
                 gl_Position = projection * view * model * vec4(position, 1.0);
-                //TexCoord = texCoord;
+                TexCoord = texCoord;
                 FragPos = vec3(model * vec4(position, 1.0f));
                 normalDirection = mat3(transpose(inverse(model))) * normal;  
             }
@@ -40,8 +40,7 @@ std::string cube_shader::getFShader()
             #version 330 core
 
             struct Material {
-                vec3 ambient;
-                vec3 diffuse;
+                sampler2D diffuse;
                 vec3 specular;
                 float shininess;
             }; 
@@ -59,18 +58,11 @@ std::string cube_shader::getFShader()
             uniform Light light;
 
             out vec4 color;
-            //in vec2 TexCoord;
+            in vec2 TexCoord;
             in vec3 normalDirection;
             in vec3 FragPos;
 
-
-            uniform sampler2D ourTexture1;
-            uniform sampler2D ourTexture2;
-            
-            // uniform vec3 objectColor;
             uniform vec3 lightColor;
-            // uniform vec3 lightPosition;
-
             uniform vec3 viewPos;
 
 
@@ -79,10 +71,10 @@ std::string cube_shader::getFShader()
                 vec3 norm = normalize(normalDirection);
                 vec3 lightDir = normalize(light.position - FragPos);
 
-                vec3 ambient = light.ambient * material.ambient;
+                vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord));
 
                 float diff = max(dot(norm, lightDir), 0.0);
-                vec3 diffuse = diff * material.diffuse * light.diffuse;
+                vec3 diffuse = diff * vec3(texture(material.diffuse, TexCoord)) * light.diffuse;
 
                 vec3 viewDir = normalize(viewPos - FragPos);
                 vec3 reflectDir = reflect(-lightDir, norm);
@@ -122,7 +114,7 @@ void cube_shader::init()
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load("res/container.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("res/container2.png", &width, &height, &nrChannels, 0);
     if (data)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -133,37 +125,39 @@ void cube_shader::init()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-    // texture 2
-    // ---------
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // load image, create texture and generate mipmaps
-    data = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
+    // // texture 2
+    // // ---------
+    // glGenTextures(1, &texture2);
+    // glBindTexture(GL_TEXTURE_2D, texture2);
+    // // set the texture wrapping parameters
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // // set texture filtering parameters
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // // load image, create texture and generate mipmaps
+    // data = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
+    // if (data)
+    // {
+    //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    //     glGenerateMipmap(GL_TEXTURE_2D);
+    // }
+    // else
+    // {
+    //     std::cout << "Failed to load texture" << std::endl;
+    // }
+    // stbi_image_free(data);
 
     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
     // ourShader.use(); // don't forget to activate/use the shader before setting uniforms!
     // either set it manually like so:
-    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture1"), 0);
+    glUniform1i(glGetUniformLocation(shaderProgram, "material.diffuse"), 0);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, diffuseMap);
     // or set it via the texture class
-    glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+    // glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
 
     GLint objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
     GLint lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
@@ -178,12 +172,12 @@ void cube_shader::init()
     GLint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
     glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
 
-    GLint ambientLoc = glGetUniformLocation(shaderProgram, "material.ambient");
-    GLint diffuseLoc = glGetUniformLocation(shaderProgram, "material.diffuse");
+    // GLint ambientLoc = glGetUniformLocation(shaderProgram, "material.ambient");
+    // GLint diffuseLoc = glGetUniformLocation(shaderProgram, "material.diffuse");
     GLint specularLoc = glGetUniformLocation(shaderProgram, "material.specular");
     GLint shinessLoc = glGetUniformLocation(shaderProgram, "material.shininess");
-    glUniform3f(ambientLoc, 1.0f, 0.5f, 0.31f);
-    glUniform3f(diffuseLoc, 1.0f, 0.5f, 0.31f);
+    // glUniform3f(ambientLoc, 1.0f, 0.5f, 0.31f);
+    // glUniform3f(diffuseLoc, 1.0f, 0.5f, 0.31f);
     glUniform3f(specularLoc, 0.5f, 0.5f, 0.5f);
     glUniform1f(shinessLoc, 32.0f);
 
@@ -205,8 +199,8 @@ void cube_shader::draw(glm::mat4 view, glm::mat4 projection)
     glBindVertexArray(mVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
+    // glActiveTexture(GL_TEXTURE1);
+    // glBindTexture(GL_TEXTURE_2D, texture2);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(createModel()));
@@ -222,12 +216,12 @@ GLuint cube_shader::initVAO()
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid *)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)0);
     glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
-    // glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
     glBindVertexArray(0);
     return VAO;
 }
