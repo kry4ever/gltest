@@ -182,11 +182,8 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-		glm::vec3 lightColor;
-		lightColor.x = sin(glfwGetTime() * 2.0f);
-		lightColor.y = sin(glfwGetTime() * 0.7f);
-		lightColor.z = sin(glfwGetTime() * 1.3f);
-
+		glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	
 		glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // 降低影响
 		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // 很低的影响
 

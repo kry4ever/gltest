@@ -41,7 +41,7 @@ std::string cube_shader::getFShader()
 
             struct Material {
                 sampler2D diffuse;
-                vec3 specular;
+                sampler2D specular;
                 float shininess;
             }; 
 
@@ -80,7 +80,8 @@ std::string cube_shader::getFShader()
                 vec3 reflectDir = reflect(-lightDir, norm);
 
                 float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-                vec3 specular = material.specular * spec * light.specular;  
+                vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoord));
+                //vec3 specular = material.specular * spec * light.specular;  
 
                 vec3 result = ambient + diffuse + specular;
                 color = vec4(result, 1.0f);
@@ -117,7 +118,7 @@ void cube_shader::init()
     unsigned char *data = stbi_load("res/container2.png", &width, &height, &nrChannels, 0);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -125,39 +126,37 @@ void cube_shader::init()
         std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-    // // texture 2
-    // // ---------
-    // glGenTextures(1, &texture2);
-    // glBindTexture(GL_TEXTURE_2D, texture2);
-    // // set the texture wrapping parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // // set texture filtering parameters
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // // load image, create texture and generate mipmaps
-    // data = stbi_load("res/awesomeface.png", &width, &height, &nrChannels, 0);
-    // if (data)
-    // {
-    //     // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    //     glGenerateMipmap(GL_TEXTURE_2D);
-    // }
-    // else
-    // {
-    //     std::cout << "Failed to load texture" << std::endl;
-    // }
-    // stbi_image_free(data);
+    // texture 2
+    // ---------
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    data = stbi_load("res/container2_specular.png", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // note that the awesomeface.png has transparency and thus an alpha channel, so make sure to tell OpenGL the data type is of GL_RGBA
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
     // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
     // -------------------------------------------------------------------------------------------
     // ourShader.use(); // don't forget to activate/use the shader before setting uniforms!
     // either set it manually like so:
+
     glUniform1i(glGetUniformLocation(shaderProgram, "material.diffuse"), 0);
-    // glActiveTexture(GL_TEXTURE0);
-    // glBindTexture(GL_TEXTURE_2D, diffuseMap);
-    // or set it via the texture class
-    // glUniform1i(glGetUniformLocation(shaderProgram, "ourTexture2"), 1);
+    glUniform1i(glGetUniformLocation(shaderProgram, "material.specular"), 1);
 
     GLint objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
     GLint lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
@@ -174,11 +173,11 @@ void cube_shader::init()
 
     // GLint ambientLoc = glGetUniformLocation(shaderProgram, "material.ambient");
     // GLint diffuseLoc = glGetUniformLocation(shaderProgram, "material.diffuse");
-    GLint specularLoc = glGetUniformLocation(shaderProgram, "material.specular");
+    // GLint specularLoc = glGetUniformLocation(shaderProgram, "material.specular");
     GLint shinessLoc = glGetUniformLocation(shaderProgram, "material.shininess");
     // glUniform3f(ambientLoc, 1.0f, 0.5f, 0.31f);
     // glUniform3f(diffuseLoc, 1.0f, 0.5f, 0.31f);
-    glUniform3f(specularLoc, 0.5f, 0.5f, 0.5f);
+    // glUniform3f(specularLoc, 0.5f, 0.5f, 0.5f);
     glUniform1f(shinessLoc, 32.0f);
 
     GLint light_ambientLoc = glGetUniformLocation(shaderProgram, "light.ambient");
@@ -199,8 +198,8 @@ void cube_shader::draw(glm::mat4 view, glm::mat4 projection)
     glBindVertexArray(mVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);
-    // glActiveTexture(GL_TEXTURE1);
-    // glBindTexture(GL_TEXTURE_2D, texture2);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(createModel()));
